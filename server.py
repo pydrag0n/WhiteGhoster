@@ -1,33 +1,46 @@
 import socket
 
-host = '26.199.90.194'
-port = 12345
+class ServerSock(socket.socket):
+    def __init__(self, HOST, PORT, socket_family, socket_type, backlog, BUFFER_SIZE):
+        
+        super().__init__(socket_family, socket_type)
+        
+        self.HOST = HOST
+        self.PORT = PORT
+        self.BUFFER_SIZE = BUFFER_SIZE
+        self.backlog = backlog
 
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.bind((host, port))
+    def init(self):
+        
+        self.bind((self.HOST, self.PORT))
+        self.listen(self.backlog)
+        self.client_socket, self.address = self.accept()
 
-print("Server STARTED")
-server_socket.listen(1)
-client_socket, addr = server_socket.accept()
-print("Client connected from:", addr)
-while True:
+    def client_connect_message(self):
+        return f"Client connect: {self.address}"
+
+    def start(self):
+        try:
+            self.init()
+            print(self.client_connect_message())
+            self.client_socket.send("hi".encode())
+            while True:
+
+                message = input("write command: ")
+                if message is None or message==" " or message=='':
+                    print("EOFerror")
+                    message = "ERROR"
+                self.client_socket.send(message.encode())
+        except KeyboardInterrupt:
+            print("CLOSE")
+            self.client_socket.close()
+        except socket.error as e:
+            print(e)
+if __name__=="__main__":
     
-    try: 
-        command = input("write command: ").strip()
-
-        if command == '' or command is None or command == ' ':
-            print("EOF error")
-            continue
-        client_socket.send(command.encode())
-        data = client_socket.recv(1024)
-
-        print("Client: ", data.decode())
-    except KeyboardInterrupt:
-        command = "disconnect"
-        print(command)
-        client_socket.send(command.encode())
-        client_socket.close()
-        server_socket.close()
-        break
-
-
+    ServerSock(HOST='127.0.0.1', 
+            PORT=12345, socket_family=socket.AF_INET, 
+            socket_type=socket.SOCK_STREAM, 
+            backlog=1, 
+            BUFFER_SIZE=1024
+            ).start()

