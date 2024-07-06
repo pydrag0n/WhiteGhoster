@@ -32,8 +32,8 @@ class ServerSock(socket.socket, MSGTypes):
     def client_connect_message(self) -> str:
         return f"Client connect: {self.address}"
     
-    def send_msg(self, msg: str, TYPE: str) -> None:
-        self.client_socket.send(f"{TYPE} {msg}".encode())
+    def send_msg(self, msg: str) -> None:
+        self.client_socket.send("{}".format(msg).encode())
         # TYPE log/server/...
         
 
@@ -42,19 +42,29 @@ class ServerSock(socket.socket, MSGTypes):
             
             self.init()
             print(self.client_connect_message())
-            self.send_msg("connected", self.LOG)           
+            self.send_msg("connected")           
             while True:
                 command = input("(q for quit) ▓ ")
                 if command is None or command==" " or command=='':
                     print("EOFerror")
                     command = "ERROR"
                     
-                elif command=="getlog":
-                    with open("logfile.txt", "a") as f:
-                        f.write(self.client_socket.recv(self.BUFFER_SIZE).decode())
-                        
-                self.send_msg(command.encode(), self.SERVER)
-                print(self.client_socket.recv(self.BUFFER_SIZE).decode())
+                elif command == "getlog":
+                    while True:
+                        df = self.client_socket.recv(self.BUFFER_SIZE)
+                        if df:
+                            f = open('sent/logs.txt', 'wb')
+                            f.write(df)
+                            f.close()
+                            m = "File sent successfully."
+                            break
+                        else:
+                            m = "FileError"
+                            break
+                    print(m)
+                                        
+                self.send_msg(command)
+                # print(self.client_socket.recv(self.BUFFER_SIZE).decode())
                 
         except KeyboardInterrupt:
             print("CLOSE")

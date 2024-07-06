@@ -3,6 +3,10 @@
         "winsock2.h": "c",
         "stdio.h": "c",
         "process.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "system_error": "c",
+        "crtdefs.h": "c",
+        "corecrt.h": "c",
+        "locale.h": "c"
     }
 }

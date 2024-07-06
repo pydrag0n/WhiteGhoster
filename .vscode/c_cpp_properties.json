@@ -4,7 +4,8 @@
             "name": "Win32",
             "includePath": [
                 "${default}",
-                "C:\\Users\\Lenovo\\gcc\\include"
+                "C:\\Users\\Lenovo\\tcc\\include",
+                "${workspaceFolder}"
             ],
             "defines": [
                 "_DEBUG",
@@ -14,10 +15,10 @@
             "cStandard": "c17",
             "cppStandard": "gnu++17",
             "intelliSenseMode": "${default}",
-            "compilerPath": "C:\\Users\\Lenovo\\gcc\\bin\\gcc.exe",
+            "compilerPath": "C:\\Users\\Lenovo\\tcc\\tcc.exe",
             "browse": {
                 "path": [
-                    "C:\\Users\\Lenovo\\gcc\\bin"
+                    "C:\\Users\\Lenovo\\tcc"
                 ]
             }
         }

